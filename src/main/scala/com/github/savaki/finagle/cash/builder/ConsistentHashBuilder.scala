@@ -22,21 +22,23 @@ private[builder] object ConsistentHashConfigEvidence {
 
 }
 
-class ConsistentHashBuilder[IN, OUT, KEY, HasCodec, HasHashFunction] private[cash](config: ConsistentHashConfig[IN, OUT, KEY, HasCodec, HasHashFunction]) {
+class ConsistentHashBuilder[IN, OUT, HasCodec, HasHashFunction] private[cash](config: ConsistentHashConfig[IN, OUT, HasCodec, HasHashFunction]) {
 
   import ConsistentHashConfig._
 
   // Convenient aliases.
-  type FullySpecifiedConfig = FullySpecified[IN, OUT, KEY]
-  type ThisConfig = ConsistentHashConfig[IN, OUT, KEY, HasCodec, HasHashFunction]
-  type This = ConsistentHashBuilder[IN, OUT, KEY, HasCodec, HasHashFunction]
+  type FullySpecifiedConfig = FullySpecified[IN, OUT]
+  type ThisConfig = ConsistentHashConfig[IN, OUT, HasCodec, HasHashFunction]
+  type This = ConsistentHashBuilder[IN, OUT, HasCodec, HasHashFunction]
 
-  def hash[KEY1](hashFunction: HashFunction[KEY1]) = {
-    new ConsistentHashBuilder[IN, OUT, KEY1, HasCodec, Yes](config.copy(hashFunction = Option(hashFunction)))
+  def hash[IN1](hashFunction: HashFunction[IN1]) = {
+    val newConfig: ConsistentHashConfig[IN1, OUT, HasCodec, Yes] = config.asInstanceOf[ConsistentHashConfig[IN1, OUT, HasCodec, Yes]].copy(hashFunction = Option(hashFunction))
+    new ConsistentHashBuilder[IN1, OUT, HasCodec, Yes](newConfig)
   }
 
-  def codec[IN1, OUT1](c: CodecFactory[IN1, OUT1]) = {
-    new ConsistentHashBuilder[IN1, OUT1, KEY, Yes, HasHashFunction](config.copy(codecFactory = Option(c)))
+  def codec[IN1, OUT1](codecFactory: CodecFactory[IN1, OUT1]) = {
+    val newConfig: ConsistentHashConfig[IN1, OUT1, Yes, HasHashFunction] = config.asInstanceOf[ConsistentHashConfig[IN1, OUT1, Yes, HasHashFunction]].copy(codecFactory = Option(codecFactory))
+    new ConsistentHashBuilder[IN1, OUT1, Yes, HasHashFunction](newConfig)
   }
 
   def build()(implicit CONSISTENT_HASH_BUILDER_IS_NOT_FULLY_SPECIFIED_SEE_ClientBuilder_DOCUMENTATION: ConsistentHashConfigEvidence[HasCodec, HasHashFunction]): Service[IN, OUT] = {
@@ -48,17 +50,17 @@ class ConsistentHashBuilder[IN, OUT, KEY, HasCodec, HasHashFunction] private[cas
   }
 }
 
-private[builder] final case class ConsistentHashConfig[IN, OUT, KEY, HasCodec, HasHashFunction](
-                                                                                                 hashFunction: Option[HashFunction[KEY]] = None,
-                                                                                                 codecFactory: Option[CodecFactory[IN, OUT]] = None
-                                                                                                 ) {
+private[builder] final case class ConsistentHashConfig[IN, OUT, HasCodec, HasHashFunction](
+                                                                                            hashFunction: Option[HashFunction[IN]] = None,
+                                                                                            codecFactory: Option[CodecFactory[IN, OUT]] = None
+                                                                                            ) {
 
   import ConsistentHashConfig._
 
-  def validated: FullySpecified[IN, OUT, KEY] = {
+  def validated: FullySpecified[IN, OUT] = {
     hashFunction.getOrElse(throw new IncompleteSpecification("No hash function was specified"))
     codecFactory.getOrElse(throw new IncompleteSpecification("No codec was specified"))
-    this.asInstanceOf[FullySpecified[IN, OUT, KEY]]
+    this.asInstanceOf[FullySpecified[IN, OUT]]
   }
 }
 
@@ -66,5 +68,5 @@ object ConsistentHashConfig {
 
   sealed abstract trait Yes
 
-  type FullySpecified[IN, OUT, KEY] = ConsistentHashBuilder[IN, OUT, KEY, Yes, Yes]
+  type FullySpecified[IN, OUT] = ConsistentHashBuilder[IN, OUT, Yes, Yes]
 }

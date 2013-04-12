@@ -4,6 +4,7 @@ import org.scalatest.FlatSpec
 import com.twitter.finagle.http.Http
 import com.github.savaki.finagle.cash.HashFunction
 import com.twitter.finagle.CodecFactory
+import org.jboss.netty.handler.codec.http.HttpRequest
 
 /**
  * @author matt
@@ -11,13 +12,12 @@ import com.twitter.finagle.CodecFactory
 
 class ConsistentHashBuilderTest extends FlatSpec {
   "#build" should "throw exception if not fully spec'd" in {
+    /**
+     * if you remove either the codec or the HashFunction, the code won't compile
+     */
     ConsistentHashBuilder()
       .codec(Http())
-      .hash(null.asInstanceOf[HashFunction[String]])
+      .hash(null.asInstanceOf[HashFunction[HttpRequest]])
       .build()
-  }
-
-  def foo[IN1, OUT1](codec: CodecFactory[IN1, OUT1])(implicit in: Manifest[IN1]) {
-    println(in.erasure.getCanonicalName)
   }
 }
