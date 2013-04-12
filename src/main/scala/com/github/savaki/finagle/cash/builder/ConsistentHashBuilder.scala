@@ -1,13 +1,26 @@
 package com.github.savaki.finagle.cash.builder
 
 import com.github.savaki.finagle.cash.HashFunction
-import com.twitter.finagle.{Codec, CodecFactory, Service}
+import com.twitter.finagle.{CodecFactory, Service}
 import com.twitter.finagle.builder.{ClientBuilder, IncompleteSpecification}
 import scala.annotation.implicitNotFound
 
 /**
  * @author matt
  */
+
+object ConsistentHashBuilder {
+  def apply() = new ConsistentHashBuilder(new ConsistentHashConfig())
+}
+
+@implicitNotFound("Builder is not fully configured: Codec: ${HasCodec}, HasHashFunction: ${HasHashFunction}")
+private[builder] trait ConsistentHashConfigEvidence[HasCodec, HasHashFunction]
+
+private[builder] object ConsistentHashConfigEvidence {
+
+  implicit object FullyConfigured extends ConsistentHashConfigEvidence[ConsistentHashConfig.Yes, ConsistentHashConfig.Yes]
+
+}
 
 class ConsistentHashBuilder[IN, OUT, KEY, HasCodec, HasHashFunction] private[cash](config: ConsistentHashConfig[IN, OUT, KEY, HasCodec, HasHashFunction]) {
 
@@ -22,26 +35,22 @@ class ConsistentHashBuilder[IN, OUT, KEY, HasCodec, HasHashFunction] private[cas
     new ConsistentHashBuilder[IN, OUT, KEY1, HasCodec, Yes](config.copy(hashFunction = Option(hashFunction)))
   }
 
-  def codec[IN1, OUT1](c: Codec[IN1, OUT1]) = {
+  def codec[IN1, OUT1](c: CodecFactory[IN1, OUT1]) = {
     new ConsistentHashBuilder[IN1, OUT1, KEY, Yes, HasHashFunction](config.copy(codecFactory = Option(c)))
   }
 
-/*
-  def build(implicit THE_BUILDER_IS_NOT_FULLY_SPECIFIED_SEE_ClientBuilder_DOCUMENTATION: ConsistentHashConfigEvidence[HasCodec, HasHashFunction]): Service[IN, OUT] = {
+  def build()(implicit CONSISTENT_HASH_BUILDER_IS_NOT_FULLY_SPECIFIED_SEE_ClientBuilder_DOCUMENTATION: ConsistentHashConfigEvidence[HasCodec, HasHashFunction]): Service[IN, OUT] = {
     ClientBuilder()
       .codec(config.codecFactory.get)
+      .hostConnectionLimit(1024)
+      .hosts("www.yahoo.com:80")
       .build()
   }
-*/
-}
-
-object ConsistentHashBuilder {
-  def apply() = new ConsistentHashBuilder(new ConsistentHashConfig())
 }
 
 private[builder] final case class ConsistentHashConfig[IN, OUT, KEY, HasCodec, HasHashFunction](
                                                                                                  hashFunction: Option[HashFunction[KEY]] = None,
-                                                                                                 codecFactory: Option[Codec[IN, OUT]] = None
+                                                                                                 codecFactory: Option[CodecFactory[IN, OUT]] = None
                                                                                                  ) {
 
   import ConsistentHashConfig._
@@ -58,13 +67,4 @@ object ConsistentHashConfig {
   sealed abstract trait Yes
 
   type FullySpecified[IN, OUT, KEY] = ConsistentHashBuilder[IN, OUT, KEY, Yes, Yes]
-}
-
-@implicitNotFound("Builder is not fully configured: Codec: ${HasCodec}, HasHashFunction: ${HasHashFunction}")
-private[builder] trait ConsistentHashConfigEvidence[HasCodec, HasHashFunction]
-
-private[builder] object ConsistentHashConfigEvidence {
-
-  implicit object FullyConfigured extends ConsistentHashConfigEvidence[ConsistentHashConfig.Yes, ConsistentHashConfig.Yes]
-
 }

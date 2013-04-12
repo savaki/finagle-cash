@@ -11,14 +11,13 @@ import com.twitter.finagle.CodecFactory
 
 class ConsistentHashBuilderTest extends FlatSpec {
   "#build" should "throw exception if not fully spec'd" in {
-    foo(Http.get())
     ConsistentHashBuilder()
-      .codec(Http.get())
+      .codec(Http())
       .hash(null.asInstanceOf[HashFunction[String]])
-//      .build()
+      .build()
   }
 
-  def foo[IN1, OUT1](codec: CodecFactory[IN1, OUT1])(implicit in:Manifest[IN1]) {
+  def foo[IN1, OUT1](codec: CodecFactory[IN1, OUT1])(implicit in: Manifest[IN1]) {
     println(in.erasure.getCanonicalName)
   }
 }
