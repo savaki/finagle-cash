@@ -15,7 +15,7 @@ class ConsistentHashBuilderTest extends FlatSpec {
     /**
      * if you remove either the codec or the HashFunction, the code won't compile
      */
-    ConsistentHashBuilder()
+    CashBuilder()
       .codec(Http())
       .hash(null.asInstanceOf[HashFunction[HttpRequest]])
       .build()
