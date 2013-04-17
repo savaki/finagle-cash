@@ -2,9 +2,9 @@ package com.github.savaki.finagle.cash.builder
 
 import com.twitter.finagle.Service
 import com.twitter.util.Future
-import com.github.savaki.finagle.cash.HashFunction
+import com.github.savaki.finagle.cash.{KeyExtractor, HashKey, HashFunction}
 
-class CashService[IN, OUT](hashFunction: HashFunction[IN]) extends Service[IN, OUT] {
+class CashService[IN, OUT](keyExtractor:KeyExtractor[IN], hashFunction: HashFunction) extends Service[IN, OUT] {
   private[this] val keyToUse = new ThreadLocal[HashKey] {
     override def initialValue() = HashKey(0)
   }
@@ -12,7 +12,7 @@ class CashService[IN, OUT](hashFunction: HashFunction[IN]) extends Service[IN, O
   def apply(request: IN): Future[OUT] = {
     var key = keyToUse.get()
     if (key.value == 0) {
-      key = hashFunction(request)
+      key = hashFunction(keyExtractor(request))
     }
 
     val service = lookup(key)
@@ -24,7 +24,7 @@ class CashService[IN, OUT](hashFunction: HashFunction[IN]) extends Service[IN, O
   }
 
   def hashKey(request: IN): HashKey = {
-    hashFunction(request)
+    hashFunction(keyExtractor(request))
   }
 
   def withHashKey[T](key: HashKey)(function: => T): T = {
@@ -38,4 +38,3 @@ class CashService[IN, OUT](hashFunction: HashFunction[IN]) extends Service[IN, O
   }
 }
 
-case class HashKey(value: Long)

@@ -32,7 +32,7 @@ class CashBuilder[IN, OUT, HasCodec, HasHashFunction] private[cash](config: Cash
   type ThisConfig = CashConfig[IN, OUT, HasCodec, HasHashFunction]
   type This = CashBuilder[IN, OUT, HasCodec, HasHashFunction]
 
-  def hash[IN1](hashFunction: HashFunction[IN1]) = {
+  def hash[IN1](hashFunction: HashFunction) = {
     val newConfig: CashConfig[IN1, OUT, HasCodec, Yes] = config.asInstanceOf[CashConfig[IN1, OUT, HasCodec, Yes]].copy(hashFunction = Option(hashFunction))
     new CashBuilder[IN1, OUT, HasCodec, Yes](newConfig)
   }
@@ -52,7 +52,7 @@ class CashBuilder[IN, OUT, HasCodec, HasHashFunction] private[cash](config: Cash
 }
 
 private[builder] final case class CashConfig[IN, OUT, HasCodec, HasHashFunction](
-                                                                                            hashFunction: Option[HashFunction[IN]] = None,
+                                                                                            hashFunction: Option[HashFunction] = None,
                                                                                             codecFactory: Option[CodecFactory[IN, OUT]] = None
                                                                                             ) {
 

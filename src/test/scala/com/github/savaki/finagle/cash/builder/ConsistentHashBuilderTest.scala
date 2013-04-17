@@ -3,7 +3,6 @@ package com.github.savaki.finagle.cash.builder
 import org.scalatest.FlatSpec
 import com.twitter.finagle.http.Http
 import com.github.savaki.finagle.cash.HashFunction
-import com.twitter.finagle.CodecFactory
 import org.jboss.netty.handler.codec.http.HttpRequest
 
 /**
@@ -17,7 +16,7 @@ class ConsistentHashBuilderTest extends FlatSpec {
      */
     CashBuilder()
       .codec(Http())
-      .hash(null.asInstanceOf[HashFunction[HttpRequest]])
+      .hash(null.asInstanceOf[HashFunction])
       .build()
   }
 }

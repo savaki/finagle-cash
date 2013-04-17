@@ -14,6 +14,7 @@ resolvers += "Twitter Repo" at "http://maven.twttr.com"
         "com.twitter" %% "finagle-core" % finagleVersion withSources(),
         "com.twitter" %% "finagle-native" % finagleVersion withSources(),
         "com.twitter" %% "finagle-redis" % finagleVersion withSources(),
+        "com.twitter" %% "finagle-memcached" % finagleVersion withSources(),
         "com.twitter" %% "finagle-serversets" % finagleVersion withSources(),
         "com.twitter" %% "finagle-http" % finagleVersion withSources()
     )
