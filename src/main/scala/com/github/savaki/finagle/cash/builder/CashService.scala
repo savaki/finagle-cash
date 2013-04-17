@@ -2,33 +2,31 @@ package com.github.savaki.finagle.cash.builder
 
 import com.twitter.finagle.Service
 import com.twitter.util.Future
-import com.github.savaki.finagle.cash.{KeyExtractor, HashKey, HashFunction}
+import com.github.savaki.finagle.cash.{ConsistentHash, KeyExtractor, HashFunction}
 
-class CashService[IN, OUT](keyExtractor:KeyExtractor[IN], hashFunction: HashFunction) extends Service[IN, OUT] {
-  private[this] val keyToUse = new ThreadLocal[HashKey] {
-    override def initialValue() = HashKey(0)
+class CashService[IN, OUT](keyExtractor: KeyExtractor[IN], hashFunction: HashFunction, nodes: Seq[Service[IN, OUT]]) extends Service[IN, OUT] {
+  private[this] val cash = new ConsistentHash[Service[IN, OUT]](hashFunction, nodes)
+
+  private[this] val keyToUse = new ThreadLocal[String] {
+    override def initialValue() = null
   }
 
   def apply(request: IN): Future[OUT] = {
-    var key = keyToUse.get()
-    if (key.value == 0) {
-      key = hashFunction(keyExtractor(request))
-    }
-
-    val service = lookup(key)
+    val service = lookup(request)
     service(request)
   }
 
-  def lookup(hashKey: HashKey): Service[IN, OUT] = {
-    null
+  def lookup(request: IN): Service[IN, OUT] = {
+    var key = keyToUse.get()
+    if (key == null) {
+      key = keyExtractor(request)
+    }
+
+    cash.get(key)
   }
 
-  def hashKey(request: IN): HashKey = {
-    hashFunction(keyExtractor(request))
-  }
-
-  def withHashKey[T](key: HashKey)(function: => T): T = {
-    val original: HashKey = keyToUse.get()
+  def withKey[T](key: String)(function: => T): T = {
+    val original: String = keyToUse.get()
     keyToUse.set(key)
     try {
       function
