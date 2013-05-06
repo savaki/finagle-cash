@@ -35,6 +35,19 @@ class ConsistentHashTest extends FlatSpec with ShouldMatchers {
     }
   }
 
+  it should "be performant when returning nodes" in {
+    val nodes: Seq[String] = Seq("A", "B", "C", "D", "E", "F", "G", "H", "I", "J", "K", "L", "M", "N")
+    val cash = new ConsistentHash[String](hashFunction, nodes)
+    val started = System.currentTimeMillis()
+    val count: Int = 100000
+    for (i <- 1 to count) {
+      cash.nodes(i.toString)
+    }
+    val elapsed = System.currentTimeMillis() - started
+    println(s"${count} executions completed in ${elapsed}ms (${elapsed.toDouble / count.toDouble}ms)")
+    elapsed should be < 1000L
+  }
+
   /**
    * verifies that the keys are more or less evenly distributed in the buckets
    *

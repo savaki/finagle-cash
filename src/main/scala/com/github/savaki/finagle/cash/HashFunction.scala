@@ -63,6 +63,11 @@ class ConsistentHash[T <: AnyRef](hashFunction: HashFunction, nodes: Seq[T], num
     this
   }
 
+  def nodes(key: String, depth: Int = 3)(implicit t: Manifest[T]): Array[T] = {
+    val hashKey: Int = hashFunction(key).value
+    btree.nodes(hashKey, depth)
+  }
+
   def get(key: String): T = {
     if (circle.isEmpty) {
       throw new UnsupportedOperationException("illegal call to #get with ConsistentHash with no nodes defined!  Please use #add to add at least one node")

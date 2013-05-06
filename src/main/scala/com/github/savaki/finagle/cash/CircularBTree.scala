@@ -11,6 +11,11 @@ package com.github.savaki.finagle.cash
  * @author matt.ho@gmail.com
  */
 class CircularBTree[T <: AnyRef](circleArray: Array[(Int, T)]) {
+  /**
+   * holds the number of distinct nodes in this btree
+   */
+  val distinctNodes = circleArray.groupBy(_._2).size
+
   def value(index: Int): T = {
     circleArray(index)._2
   }
@@ -36,7 +41,7 @@ class CircularBTree[T <: AnyRef](circleArray: Array[(Int, T)]) {
 
       } else {
         // between two keys
-        indexMin
+        indexMax
       }
 
     } else {
@@ -53,5 +58,38 @@ class CircularBTree[T <: AnyRef](circleArray: Array[(Int, T)]) {
         indexMidPoint
       }
     }
+  }
+
+  /**
+   * return the N nodes that cover the specified key
+   *
+   * Logic:
+   *
+   * 1. using #search, find the index associated with the key provided
+   * 2. going in an ascending fashion, return depth number of unique nodes in our circleArray
+   *
+   * @param key the search item
+   * @param depth how many elements to return
+   * @return depth number of elements
+   */
+  def nodes(key: Int, depth: Int = 1)(implicit t: Manifest[T]): Array[T] = {
+    require(depth <= distinctNodes, "#nodes request called with depth that exceeded number of distinct nodes")
+
+    val result = new Array[T](depth)
+
+    var position = 0
+    var index = search(key)
+
+    while (position < depth) {
+      val node: T = circleArray(index)._2
+      if (result.contains(node) == false) {
+        // ensure that values in the result are unique
+        result(position) = node
+        position = position + 1
+      }
+      index = (index + 1) % circleArray.length
+    }
+
+    result
   }
 }
