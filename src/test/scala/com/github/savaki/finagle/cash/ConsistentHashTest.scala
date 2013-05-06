@@ -66,12 +66,14 @@ class ConsistentHashTest extends FlatSpec with ShouldMatchers {
   def evaluate(nodes: Seq[String], cash: ConsistentHash[String], count: Int = 100000): util.HashMap[String, Int] = {
     val counter = new util.HashMap[String, Int]
     nodes.foreach(node => counter.put(node, 0))
+    val start = System.currentTimeMillis()
     for (i <- 1 to count) {
       val key: String = cash.get(i.toString)
       val value: Int = counter.get(key)
       counter.put(key, value + 1)
     }
-    println(counter)
+    val elapsed = System.currentTimeMillis() - start
+    println(s"${counter} => ${elapsed}ms")
     counter
   }
 }
